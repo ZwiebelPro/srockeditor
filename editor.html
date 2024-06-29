@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rockk Editor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #181818; /* Darker background */
+            color: #d4d4d4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden; /* Hide overflow to prevent scrollbars */
+        }
+
+        .container {
+            width: 80%;
+            max-width: 1200px;
+            height: 80%;
+            max-height: 800px;
+            background-color: #252526;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #333333;
+            color: #d4d4d4;
+            padding: 12px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative; /* Position for dropdown */
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: normal;
+        }
+
+        .clean-button {
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #d4d4d4;
+            background-color: #333333; /* Black themed */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .clean-button:hover {
+            background-color: #555555;
+        }
+
+        .language-dropdown {
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #d4d4d4;
+            background-color: #333333;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .language-dropdown:focus {
+            outline: none;
+        }
+
+        .language-options {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 1;
+            background-color: #1e1e1e;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .language-options.active {
+            display: block;
+        }
+
+        .language-option {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .language-option:hover {
+            background-color: #007acc;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .line-numbers {
+            flex-shrink: 0;
+            background-color: #333333;
+            color: #555555;
+            padding: 20px 10px;
+            text-align: center;
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-y: scroll;
+        }
+
+        .code-editor {
+            flex-grow: 1;
+            position: relative;
+            overflow: auto;
+        }
+
+        .code-editor textarea {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            font-size: 14px;
+            outline: none;
+            border: none;
+            resize: none;
+            overflow: auto;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', Courier, monospace;
+            box-sizing: border-box;
+        }
+
+        .keyword {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+
+        /* Autocomplete dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            background-color: #2d2d30;
+            border: 1px solid #444;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1;
+            display: none;
+        }
+
+        .autocomplete-dropdown.active {
+            display: block;
+        }
+
+        .autocomplete-dropdown li {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .autocomplete-dropdown li:hover {
+            background-color: #007acc;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a4a4a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Rockk Editor</h1>
+            <button onclick="clearEditor()" class="clean-button">Clear</button>
+            <div class="language-dropdown" onclick="toggleLanguageOptions()">Lua</div>
+            <div id="languageOptions" class="language-options">
+                <div class="language-option" onclick="selectLanguage('Lua')">Lua</div>
+                <!-- Add more language options here -->
+            </div>
+        </div>
+        <div class="editor-container">
+            <div class="line-numbers" id="lineNumbers"></div>
+            <div class="code-editor">
+                <textarea id="codeEditor" class="editor">// Start coding here...</textarea>
+                <ul id="autocompleteDropdown" class="autocomplete-dropdown"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to clear the editor content
+        function clearEditor() {
+            const codeEditor = document.getElementById('codeEditor');
+            codeEditor.value = '';
+            updateLineNumbers();
+            codeEditor.focus();
+        }
+
+        // Function to toggle language options dropdown
+        function toggleLanguageOptions() {
+            const languageOptions = document.getElementById('languageOptions');
+            languageOptions.classList.toggle('active');
+        }
+
+        // Function to select a programming language
+        function selectLanguage(language) {
+            toggleLanguageOptions(); // Hide language options dropdown
+            // Implement functionality based on selected language (e.g., syntax highlighting)
+            alert(`Language selected: ${language}`);
+        }
+
+        // Line number update
+        const codeEditor = document.getElementById('codeEditor');
+        const lineNumbers = document.getElementById('lineNumbers');
+
+        codeEditor.addEventListener('input', updateLineNumbers);
+
+        function updateLineNumbers() {
+            const lines = codeEditor.value.split('\n').length;
+            lineNumbers.innerHTML = '';
+            for (let i = 1; i <= lines; i++) {
+                const line = document.createElement('div');
+                line.textContent = i;
+                lineNumbers.appendChild(line);
+            }
+        }
+
+        // Autocomplete keywords
+        const keywords = [
+            'and', 'break', 'do', 'else', 'elseif',
+            'end', 'false', 'for', 'function', 'if',
+            'in', 'local', 'nil', 'not', 'or', 'repeat',
+            'return', 'then', 'true', 'until', 'while'
+        ];
+
+        // Autocomplete dropdown functionality
+        const autocompleteDropdown = document.getElementById('autocompleteDropdown');
+        let currentSuggestions = [];
+
+        codeEditor.addEventListener('input', function() {
+            const cursorPosition = codeEditor.selectionStart;
+            const textBeforeCursor = codeEditor.value.substring(0, cursorPosition);
+            const lastTyped = textBeforeCursor.trim().split(/\s+/).pop().toLowerCase(); // Get last typed word, converted to lowercase
+
+            // Clear previous suggestions
+            autocompleteDropdown.innerHTML = '';
+
+            if (lastTyped) {
+                currentSuggestions = keywords.filter(keyword => keyword.startsWith(lastTyped));
+
+                if (currentSuggestions.length > 0) {
+                    currentSuggestions.forEach(suggestion => {
+                        const li = document.createElement('li');
+                        li.textContent = suggestion;
+                        li.onclick = function() {
+                            insertTextAtCursor(suggestion.slice(lastTyped.length));
+                            hideAutocompleteDropdown();
+                            codeEditor.focus();
+                        };
+                        autocompleteDropdown.appendChild(li);
+                    });
+
+                    showAutocompleteDropdown(cursorPosition);
+                } else {
+                    hideAutocompleteDropdown();
+                }
+            } else {
+                hideAutocompleteDropdown();
+            }
+        });
+
+        function insertTextAtCursor(text) {
+            const currentText = codeEditor.value;
+            const cursorPosition = codeEditor.selectionStart;
+            codeEditor.value = currentText.substring(0, cursorPosition) + text + currentText.substring(cursorPosition);
+            codeEditor.setSelectionRange(cursorPosition + text.length, cursorPosition + text.length);
+        }
+
+        function showAutocompleteDropdown(cursorPosition) {
+            const cursorCoords = getCursorCoords(cursorPosition);
+            autocompleteDropdown.style.top = cursorCoords.top + 'px';
+            autocompleteDropdown.style.left = cursorCoords.left + 'px';
+            autocompleteDropdown.classList.add('active');
+        }
+
+        function hideAutocompleteDropdown() {
+            autocompleteDropdown.classList.remove('active');
+        }
+
+        function getCursorCoords(cursorPosition) {
+            const rect = codeEditor.getBoundingClientRect();
+            const lineHeight = parseFloat(getComputedStyle(codeEditor).lineHeight);
+            const linesAbove = codeEditor.value.substring(0, cursorPosition).split('\n').length - 1;
+            const top = rect.top + lineHeight * linesAbove;
+            const left = rect.left;
+            return { top, left };
+        }
+
+        // Handle special characters like "", '', (), [], {}, <>
+        codeEditor.addEventListener('keydown', function(event) {
+            const key = event.key;
+            const cursorPosition = codeEditor.selectionStart;
+            const text = codeEditor.value;
+
+            switch (key) {
+                case '"':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '""' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case "'":
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + "''" + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case '(':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '()' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case ')':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '()' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case '[':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '[]' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case ']':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '[]' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case '{':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '{}' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case '}':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '{}' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case '<':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '<>' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+                case '>':
+                    event.preventDefault();
+                    codeEditor.value = text.substring(0, cursorPosition) + '<>' + text.substring(cursorPosition);
+                    codeEditor.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rockk - Code Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden; /* Hide overflow to prevent scrollbars */
+        }
+
+        .container {
+            text-align: center;
+            transition: filter 0.5s ease; /* Smooth transition for the blur effect */
+        }
+
+        .blur {
+            filter: blur(5px); /* Apply a blur effect */
+            pointer-events: none; /* Prevent interaction with blurred elements */
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            font-size: 18px;
+            color: #007bff;
+            text-decoration: none;
+            border: 2px solid transparent; /* Transparent border initially */
+            border-radius: 5px;
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s; /* Smooth transitions */
+            background-color: #fff; /* Background color */
+        }
+
+        .button:hover {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff; /* Border color on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <h1>Welcome to Rockk - Your Code Editor</h1>
+        <a href="./Editor/editor.html" class="button" id="editorButton">Go to Rockk</a>
+    </div>
+
+    <script>
+        const container = document.getElementById('container');
+        const editorButton = document.getElementById('editorButton');
+
+        // Function to apply blur effect when loading
+        window.onload = function() {
+            container.classList.add('blur');
+            setTimeout(() => {
+                container.classList.remove('blur'); // Remove blur effect after delay
+            }, 1000); // Adjust delay timing as needed
+        };
+
+        editorButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default link behavior
+
+            container.classList.add('blur'); // Apply blur effect on button click
+
+            // Simulate smooth transition and delay to allow time for blur effect to be visible
+            setTimeout(() => {
+                window.location.href = "./Editor/editor.html"; // Redirect to editor.html after blur effect
+            }, 500); // Adjust delay timing as needed
+        });
+    </script>
+</body>
+</html>
